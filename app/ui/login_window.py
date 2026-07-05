@@ -1,3 +1,4 @@
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QWidget,
     QLabel,
@@ -6,7 +7,9 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QMessageBox,
 )
-from PySide6.QtCore import Qt
+
+from app.services.auth_service import AuthService
+from app.ui.dashboard import Dashboard
 
 
 class LoginWindow(QWidget):
@@ -37,7 +40,6 @@ class LoginWindow(QWidget):
         login_btn.clicked.connect(self.login)
 
         layout = QVBoxLayout()
-
         layout.addWidget(title)
         layout.addWidget(subtitle)
         layout.addSpacing(20)
@@ -48,19 +50,18 @@ class LoginWindow(QWidget):
         self.setLayout(layout)
 
     def login(self):
+        user = AuthService.login(
+            self.username.text(),
+            self.password.text()
+        )
 
-        if (
-            self.username.text() == "admin"
-            and self.password.text() == "admin123"
-        ):
-            QMessageBox.information(
-                self,
-                "Success",
-                "Login Successful!"
-            )
+        if user:
+            self.dashboard = Dashboard(user)
+            self.dashboard.show()
+            self.close()
         else:
             QMessageBox.warning(
                 self,
-                "Error",
-                "Invalid Username or Password"
+                "Login Failed",
+                "Invalid username or password"
             )
