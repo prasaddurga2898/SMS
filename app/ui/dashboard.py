@@ -1,15 +1,19 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QLabel,
     QMainWindow,
     QWidget,
     QVBoxLayout,
     QHBoxLayout,
-    QGridLayout,
+    QLabel,
     QPushButton,
     QFrame,
+    QGridLayout,
+    QListWidget,
+    QListWidgetItem,
     QStatusBar,
-    QMessageBox,
+    QMenuBar,
+    QToolBar,
+    QMessageBox
 )
 
 
@@ -21,9 +25,30 @@ class Dashboard(QMainWindow):
         self.user = user
 
         self.setWindowTitle("EduSphere School Management System")
-        self.resize(1200, 700)
+        self.resize(1300, 750)
 
+        self.create_menu()
+        self.create_toolbar()
         self.create_ui()
+
+    def create_menu(self):
+
+        menubar = self.menuBar()
+
+        menubar.addMenu("File")
+        menubar.addMenu("Students")
+        menubar.addMenu("Teachers")
+        menubar.addMenu("Attendance")
+        menubar.addMenu("Fees")
+        menubar.addMenu("Reports")
+        menubar.addMenu("Settings")
+        menubar.addMenu("Help")
+
+    def create_toolbar(self):
+
+        toolbar = QToolBar("Main Toolbar")
+        toolbar.setMovable(False)
+        self.addToolBar(toolbar)
 
     def create_card(self, title, value):
 
@@ -31,26 +56,28 @@ class Dashboard(QMainWindow):
         frame.setFrameShape(QFrame.Box)
         frame.setStyleSheet("""
             QFrame{
-                border:1px solid #cccccc;
-                border-radius:8px;
                 background:white;
+                border:1px solid #cfd8dc;
+                border-radius:8px;
             }
         """)
 
         layout = QVBoxLayout(frame)
 
-        title_lbl = QLabel(title)
-        title_lbl.setAlignment(Qt.AlignCenter)
-        title_lbl.setStyleSheet("font-size:16px;")
+        lbl_title = QLabel(title)
+        lbl_title.setAlignment(Qt.AlignCenter)
+        lbl_title.setStyleSheet("font-size:16px;")
 
-        value_lbl = QLabel(str(value))
-        value_lbl.setAlignment(Qt.AlignCenter)
-        value_lbl.setStyleSheet(
-            "font-size:28px;font-weight:bold;color:#1565C0;"
-        )
+        lbl_value = QLabel(str(value))
+        lbl_value.setAlignment(Qt.AlignCenter)
+        lbl_value.setStyleSheet("""
+            font-size:28px;
+            font-weight:bold;
+            color:#1565C0;
+        """)
 
-        layout.addWidget(title_lbl)
-        layout.addWidget(value_lbl)
+        layout.addWidget(lbl_title)
+        layout.addWidget(lbl_value)
 
         return frame
 
@@ -59,9 +86,35 @@ class Dashboard(QMainWindow):
         central = QWidget()
         self.setCentralWidget(central)
 
-        main_layout = QVBoxLayout(central)
+        root = QHBoxLayout(central)
 
-        # Header
+        # ---------------- Left Navigation ----------------
+
+        nav = QListWidget()
+        nav.setFixedWidth(220)
+
+        menus = [
+            "🏠 Dashboard",
+            "👨‍🎓 Students",
+            "👩‍🏫 Teachers",
+            "📅 Attendance",
+            "💰 Fees",
+            "📝 Examinations",
+            "📚 Library",
+            "🚌 Transport",
+            "📊 Reports",
+            "⚙ Settings"
+        ]
+
+        for item in menus:
+            nav.addItem(QListWidgetItem(item))
+
+        root.addWidget(nav)
+
+        # ---------------- Right Panel ----------------
+
+        right = QVBoxLayout()
+
         title = QLabel("EduSphere School Management System")
         title.setAlignment(Qt.AlignCenter)
         title.setStyleSheet("""
@@ -71,62 +124,78 @@ class Dashboard(QMainWindow):
             padding:10px;
         """)
 
-        main_layout.addWidget(title)
+        right.addWidget(title)
 
-        # Menu Buttons
-        menu = QHBoxLayout()
+        welcome = QLabel(
+            f"Welcome, {self.user.full_name}\nRole : {self.user.role}"
+        )
 
-        buttons = [
-            "Dashboard",
-            "Students",
-            "Teachers",
-            "Attendance",
-            "Fees",
-            "Reports",
-            "Settings",
-        ]
+        welcome.setStyleSheet("""
+            font-size:16px;
+            padding:15px;
+        """)
 
-        for text in buttons:
-            btn = QPushButton(text)
-            btn.setMinimumHeight(40)
-            menu.addWidget(btn)
+        right.addWidget(welcome)
 
-        logout = QPushButton("Logout")
-        logout.clicked.connect(self.logout)
-        menu.addWidget(logout)
-
-        main_layout.addLayout(menu)
-
-        # Statistics
         grid = QGridLayout()
 
         grid.addWidget(self.create_card("Students", 0), 0, 0)
         grid.addWidget(self.create_card("Teachers", 0), 0, 1)
         grid.addWidget(self.create_card("Classes", 0), 0, 2)
-        grid.addWidget(self.create_card("Fees", "₹0"), 0, 3)
+        grid.addWidget(self.create_card("Pending Fees", "₹0"), 0, 3)
 
-        main_layout.addLayout(grid)
+        right.addLayout(grid)
 
-        # Welcome
-        welcome = QLabel(
-            f"Welcome {self.user.full_name}\nRole : {self.user.role}"
-        )
-        welcome.setStyleSheet("font-size:18px;padding:20px;")
+        info = QLabel("""
 
-        main_layout.addWidget(welcome)
+Welcome to EduSphere School Management System.
 
-        # Status Bar
+Use the navigation panel on the left to manage:
+
+• Students
+
+• Teachers
+
+• Attendance
+
+• Fees
+
+• Library
+
+• Reports
+
+• Settings
+
+        """)
+
+        info.setStyleSheet("""
+            background:white;
+            border:1px solid #cccccc;
+            padding:15px;
+            font-size:14px;
+        """)
+
+        right.addWidget(info)
+
+        logout = QPushButton("Logout")
+        logout.setFixedWidth(150)
+        logout.clicked.connect(self.logout)
+
+        right.addWidget(logout, alignment=Qt.AlignRight)
+
+        root.addLayout(right)
+
         status = QStatusBar()
         status.showMessage("Ready")
         self.setStatusBar(status)
 
     def logout(self):
 
-        reply = QMessageBox.question(
+        answer = QMessageBox.question(
             self,
             "Logout",
-            "Are you sure you want to logout?"
+            "Do you want to logout?"
         )
 
-        if reply == QMessageBox.Yes:
+        if answer == QMessageBox.StandardButton.Yes:
             self.close()

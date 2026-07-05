@@ -1,34 +1,34 @@
 import bcrypt
 
-from app.database.database import Base
-from app.database.database import SessionLocal
-from app.database.database import engine
+from app.database.database import Base, SessionLocal, engine
 from app.models.user import User
+from app.models.student import Student
 
 
 def initialize_database():
-
+    # Create all tables
     Base.metadata.create_all(bind=engine)
 
     db = SessionLocal()
 
-    admin = db.query(User).filter(User.username == "admin").first()
+    try:
+        admin = db.query(User).filter(User.username == "admin").first()
 
-    if not admin:
+        if not admin:
+            hashed_password = bcrypt.hashpw(
+                "admin123".encode(),
+                bcrypt.gensalt()
+            ).decode()
 
-        hashed = bcrypt.hashpw(
-            "admin123".encode(),
-            bcrypt.gensalt()
-        ).decode()
+            admin = User(
+                username="admin",
+                password=hashed_password,
+                full_name="System Administrator",
+                role="Administrator"
+            )
 
-        admin = User(
-            username="admin",
-            password=hashed,
-            full_name="System Administrator",
-            role="Administrator"
-        )
+            db.add(admin)
+            db.commit()
 
-        db.add(admin)
-        db.commit()
-
-    db.close()
+    finally:
+        db.close()
